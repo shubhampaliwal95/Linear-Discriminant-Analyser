@@ -3,10 +3,13 @@ import pandas as pd
 import numpy as np 
 from matplotlib import pyplot as plt
 import math
+import scipy.stats as stats
 #taking datasets into arrays
-dataset=pd.read_csv('dataset_1.csv')
+dataset=pd.read_csv('dataset_1.csv',header=None)
+dataset.columns=["seq","x","y","class"]
 coordinates=dataset.iloc[:,1:3].values
 member_class=dataset.iloc[:,3].values
+print(dataset.head())
 #finding mean vectors
 mean_vectors = []
 for cl in range(0,2):
@@ -28,53 +31,55 @@ S_B = (mean_vectors[1]-mean_vectors[0]).dot((mean_vectors[1]-mean_vectors[0]).T)
 S_W_inv = np.linalg.inv(S_W)
 W = S_W_inv.dot(mean_vectors[1]-mean_vectors[0])
 W = W/np.linalg.norm(W)
-print(W)
-print(coordinates.shape)
-plt.plot(coordinates,'*')
-
-#projected_points_1 = []
-#for i in range(0,1):
-#	projected_points_1.append(W.dot((coordinates[member_class==i]).T))
-#plt.plot(projected_points_1,'^')
-plt.show() 
-'''for i,mean_vec in enumerate(mean_vectors):
-	n = coordinates[member_class==i,:].shape[0]
-	mean_vec = mean_vec.reshape(2,1)
-	overall_mean = overall_mean.reshape(2,1)
-	S_B+= n * (mean_vec - overall_mean).dot((mean_vec-overall_mean).T)
-print('between-class scatter matrix', S_B)
-eig_vals, eig_vecs = np.linalg.eig(np.linalg.inv(S_W).dot(S_B))
-
-for i in range(len(eig_vals)):
-    eigvec_sc = eig_vecs[:,i].reshape(2,1)   
-    print('\nEigenvector {}: \n{}'.format(i, eigvec_sc.real))
-    print('Eigenvalue {:}: {:.2e}'.format(i, eig_vals[i].real))
-for i in range(len(eig_vals)):
-    eigv = eig_vecs[:,i].reshape(2,1)
-    np.testing.assert_array_almost_equal(np.linalg.inv(S_W).dot(S_B).dot(eigv),
-                                         eig_vals[i] * eigv,
-                                         decimal=6, err_msg='', verbose=True)
-print('ok')
-
-#eig_pairs = [(np.abs(eig_vals[i]), eig_vecs[:,i]) for i in range(len(eig_vals))]
-#eig_pairs = sorted(eig_pairs, key=lambda k: k[0], reverse=True)
-#print('Eigenvalues in decreasing order:\n')
-#for i in eig_pairs:
-#   print(i[0])
-#print('Variance explained:\n')
-#eigv_sum = sum(eig_vals)
-#for i,j in enumerate(eig_pairs):
-#    print('eigenvalue {0:}: {1:.2%}'.format(i, (j[0]/eigv_sum).real))
-#W = np.hstack((eig_pairs[0][1].reshape(2,1)))
 print(W.shape)
 print(coordinates.shape)
-X_lda = coordinates.dot(W)
-print(X_lda.shape)
-#plt.plot(W,'r')
-l1, = plt.plot(W,'r')
-l2, = plt.plot(X_lda,'*')
-#plt.show()
-plt.show()
 
-print('Done')
-'''
+#Plotting the points
+coordinates_class1=dataset[dataset['class']==0][["x","y"]].values
+coordinates_class2=dataset[dataset['class']==1][["x","y"]].values
+projection_class1=np.dot(coordinates_class1,W)
+projection_class2=np.dot(coordinates_class2,W)
+
+#Getting the class points in 2d
+proj_vec_class1=np.stack([projection_class1,projection_class1],axis=1)*W  #projected point with magnitude in direction of W
+proj_vec_class2=np.stack([projection_class2,projection_class2],axis=1)*W
+
+print(proj_vec_class1.shape)
+
+plt.plot(proj_vec_class1[::1,0],proj_vec_class1[::1,1],'.','red',alpha=0.5)	#::5 means every 5th
+plt.plot(proj_vec_class2[::1,0],proj_vec_class2[::1,1],'*','green',alpha=0.5)
+
+
+#Fitting projected points in normal distribution
+mean_projected_class1=np.mean(projection_class1)
+mean_projected_class2=np.mean(projection_class2)
+print(mean_projected_class1)
+print(mean_projected_class2)
+var_projected_class1=np.var(projection_class1)
+var_projected_class2=np.var(projection_class2)
+print(var_projected_class1)
+print(var_projected_class2)
+def solve(m1,m2,std1,std2):
+  a = 1/(2*std1**2) - 1/(2*std2**2)
+  b = m2/(std2**2) - m1/(std1**2)
+  c = m1**2 /(2*std1**2) - m2**2 / (2*std2**2) - np.log(std2/std1)
+  return np.roots([a,b,c])
+
+result = solve(mean_projected_class1,mean_projected_class2,math.sqrt(var_projected_class1),math.sqrt(var_projected_class2))
+W_perpendicular = [-W[1],W[0]]
+#print(W)
+#print(W_perpendicular)
+print(result)
+result_0=result[0]
+print(result_0)
+if((result[0]>mean_projected_class1 and result[0]<mean_projected_class2) or (result[0]>mean_projected_class2 and result[0]<mean_projected_class1)):
+	seperation_point=np.asarray([result[0],result[0]])
+elif((result[1]>mean_projected_class1 and result[1]<mean_projected_class2) or (result[1]>mean_projected_class2 and result[1]<mean_projected_class1)):
+	seperation_point=np.asarray([result[1],result[1]])
+
+point=(seperation_point.T)*W
+print(point)
+x = np.linspace(-0.1,0.1)
+y=(-W[0]/W[1])*x-point[0]*(-W[0]/W[1])+point[1]
+plt.plot(x,y,'r')
+plt.show()
