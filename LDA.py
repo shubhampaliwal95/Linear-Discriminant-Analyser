@@ -3,18 +3,21 @@ import pandas as pd
 import numpy as np 
 from matplotlib import pyplot as plt
 import math
+from scipy.stats import norm
 import scipy.stats as stats
+
 #taking datasets into arrays
 def fisher(filename):
 
 	plt.title(filename)
 	plt.xlabel('Dimension_1')
 	plt.ylabel('Dimension_2')
+
 	dataset=pd.read_csv(filename,header=None)
 	dataset.columns=["seq","x","y","class"]
 	coordinates=dataset.iloc[:,1:3].values
 	member_class=dataset.iloc[:,3].values
-	print(dataset.head())
+	# print(dataset.head())
 	#finding mean vectors
 	mean_vectors = []
 	for cl in range(0,2):
@@ -36,12 +39,15 @@ def fisher(filename):
 	S_W_inv = np.linalg.inv(S_W)
 	W = S_W_inv.dot(mean_vectors[1]-mean_vectors[0])
 	W = W/np.linalg.norm(W)
-	print(W.shape)
-	print(coordinates.shape)
+
+	#print(W.shape)
+	#print(coordinates.shape)
 
 	#Plotting the points
 	coordinates_class1=dataset[dataset['class']==0][["x","y"]].values
 	coordinates_class2=dataset[dataset['class']==1][["x","y"]].values
+	plt.plot(coordinates_class1[:,0],coordinates_class1[:,1],'.',color='r',alpha=0.25)
+	plt.plot(coordinates_class2[:,0],coordinates_class2[:,1],'*',color='g',alpha=0.25)
 	projection_class1=np.dot(coordinates_class1,W)
 	projection_class2=np.dot(coordinates_class2,W)
 
@@ -59,12 +65,12 @@ def fisher(filename):
 	#Fitting projected points in normal distribution
 	mean_projected_class1=np.mean(projection_class1)
 	mean_projected_class2=np.mean(projection_class2)
-	print(mean_projected_class1)
-	print(mean_projected_class2)
+	#print(mean_projected_class1)
+	#print(mean_projected_class2)
 	var_projected_class1=np.var(projection_class1)
 	var_projected_class2=np.var(projection_class2)
-	print(var_projected_class1)
-	print(var_projected_class2)
+	#print(var_projected_class1)
+	#print(var_projected_class2)
 	def solve(m1,m2,std1,std2):
 	  a = 1/(2*std1**2) - 1/(2*std2**2)
 	  b = m2/(std2**2) - m1/(std1**2)
@@ -72,22 +78,40 @@ def fisher(filename):
 	  return np.roots([a,b,c])
 
 	result = solve(mean_projected_class1,mean_projected_class2,math.sqrt(var_projected_class1),math.sqrt(var_projected_class2))
-	W_perpendicular = [-W[1],W[0]]
-	#print(W)
-	#print(W_perpendicular)
-	print(result)
+	W_perpendicular = np.array([-W[1],W[0]])
+	#printing normal distribution of points
+
+	z=np.linspace(-3,2,500)
+	points=np.column_stack([z,z])
+	#print("Shape of Z:",points.shape)
+	#print("Shape of You",W.shape)
+	projection_points=points*W
+	#print("Projected points:",projection_points.shape)
+	normal_point_class1=norm.pdf(z,mean_projected_class1,math.sqrt(var_projected_class1))
+	normal_point_class2=norm.pdf(z,mean_projected_class2,math.sqrt(var_projected_class2))
+	#print(normal_point_class1.shape)
+	#print(W_perpendicular.shape)
+	normal_projection_vec_class1=np.column_stack([normal_point_class1,normal_point_class1])*W_perpendicular
+	normal_projection_vec_class2=np.column_stack([normal_point_class2,normal_point_class2])*W_perpendicular
+	normal_class1=projection_points+normal_projection_vec_class1
+	normal_class2=projection_points+normal_projection_vec_class2
+	plt.plot(normal_class1[::1,0],normal_class1[::1,1],'-',color='b',alpha=0.5)
+	plt.plot(normal_class2[::1,0],normal_class2[::1,1],'-',color='b',alpha=0.5)
+
+	#print(result)
 	result_0=result[0]
-	print(result_0)
+	#print(result_0)
 	if((result[0]>mean_projected_class1 and result[0]<mean_projected_class2) or (result[0]>mean_projected_class2 and result[0]<mean_projected_class1)):
 		seperation_point=np.asarray([result[0],result[0]])
 	elif((result[1]>mean_projected_class1 and result[1]<mean_projected_class2) or (result[1]>mean_projected_class2 and result[1]<mean_projected_class1)):
 		seperation_point=np.asarray([result[1],result[1]])
 
 	point=(seperation_point.T)*W
-	print(point)
+	#print(point)
+	#Finding equation of seperating line
 	x = np.linspace(-0.1,0.1)
 	y=(-W[0]/W[1])*x-point[0]*(-W[0]/W[1])+point[1]
-	plt.plot(x,y,'b')
+	plt.plot(x,y,'b')	#plotting seperating line
 	plt.show()
 fisher('dataset_1.csv')
 fisher('dataset_2.csv')
