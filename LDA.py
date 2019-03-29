@@ -112,7 +112,9 @@ def fisher(filename):
 	x = np.linspace(-0.1,0.1)
 	y=(-W[0]/W[1])*x-point[0]*(-W[0]/W[1])+point[1]
 	plt.plot(x,y,'b')	#plotting seperating line
-	plt.show()
+	plt.savefig("fisher@"+filename+".png")
+	plt.close()
+	#plt.show()
 fisher('dataset_1.csv')
 fisher('dataset_2.csv')
 fisher('dataset_3.csv')
