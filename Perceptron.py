@@ -70,8 +70,7 @@ def perceptron(filename):
 			break
 		prev_error=net_error
 
-		#plt.show()
-		#print(W)
+		
 
 	
 perceptron('dataset_1.csv')

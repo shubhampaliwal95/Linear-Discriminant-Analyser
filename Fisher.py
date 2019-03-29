@@ -83,8 +83,7 @@ def fisher(filename):
 
 	z=np.linspace(-3,2,500)
 	points=np.column_stack([z,z])
-	#print("Shape of Z:",points.shape)
-	#print("Shape of You",W.shape)
+	
 	projection_points=points*W
 	#print("Projected points:",projection_points.shape)
 	normal_point_class1=norm.pdf(z,mean_projected_class1,math.sqrt(var_projected_class1))
