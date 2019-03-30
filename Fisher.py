@@ -6,7 +6,7 @@ import math
 from scipy.stats import norm
 import scipy.stats as stats
 
-#taking datasets into arrays
+
 def fisher(filename):
 
 	plt.title(filename)
@@ -15,9 +15,9 @@ def fisher(filename):
 
 	dataset=pd.read_csv(filename,header=None)
 	dataset.columns=["seq","x","y","class"]
-	coordinates=dataset.iloc[:,1:3].values
+	coordinates=dataset.iloc[:,1:3].values						#taking dataset into arrays
 	member_class=dataset.iloc[:,3].values
-	# print(dataset.head())
+	
 	#finding mean vectors
 	mean_vectors = []
 	for cl in range(0,2):
@@ -34,8 +34,8 @@ def fisher(filename):
 	#print('within class scatter matrix:\n', S_W)
 	#Between class covariance matrix
 	#overall_mean = np.mean(coordinates, axis=0)
-	S_B = np.zeros((2,2))
-	S_B = (mean_vectors[1]-mean_vectors[0]).dot((mean_vectors[1]-mean_vectors[0]).T)
+	#S_B = np.zeros((2,2))
+	#S_B = (mean_vectors[1]-mean_vectors[0]).dot((mean_vectors[1]-mean_vectors[0]).T)
 	S_W_inv = np.linalg.inv(S_W)
 	W = S_W_inv.dot(mean_vectors[1]-mean_vectors[0])
 	W = W/np.linalg.norm(W)
@@ -65,12 +65,9 @@ def fisher(filename):
 	#Fitting projected points in normal distribution
 	mean_projected_class1=np.mean(projection_class1)
 	mean_projected_class2=np.mean(projection_class2)
-	#print(mean_projected_class1)
-	#print(mean_projected_class2)
 	var_projected_class1=np.var(projection_class1)
 	var_projected_class2=np.var(projection_class2)
-	#print(var_projected_class1)
-	#print(var_projected_class2)
+	#Finding point of intersection of normal distribution
 	def solve(m1,m2,std1,std2):
 	  a = 1/(2*std1**2) - 1/(2*std2**2)
 	  b = m2/(std2**2) - m1/(std1**2)
@@ -85,11 +82,8 @@ def fisher(filename):
 	points=np.column_stack([z,z])
 	
 	projection_points=points*W
-	#print("Projected points:",projection_points.shape)
 	normal_point_class1=norm.pdf(z,mean_projected_class1,math.sqrt(var_projected_class1))
 	normal_point_class2=norm.pdf(z,mean_projected_class2,math.sqrt(var_projected_class2))
-	#print(normal_point_class1.shape)
-	#print(W_perpendicular.shape)
 	normal_projection_vec_class1=np.column_stack([normal_point_class1,normal_point_class1])*W_perpendicular
 	normal_projection_vec_class2=np.column_stack([normal_point_class2,normal_point_class2])*W_perpendicular
 	normal_class1=projection_points+normal_projection_vec_class1
@@ -99,7 +93,7 @@ def fisher(filename):
 
 	#print(result)
 	result_0=result[0]
-	#print(result_0)
+	#Taking that root as intersection point which lies between means of both classes
 	if((result[0]>mean_projected_class1 and result[0]<mean_projected_class2) or (result[0]>mean_projected_class2 and result[0]<mean_projected_class1)):
 		seperation_point=np.asarray([result[0],result[0]])
 	elif((result[1]>mean_projected_class1 and result[1]<mean_projected_class2) or (result[1]>mean_projected_class2 and result[1]<mean_projected_class1)):
@@ -110,8 +104,8 @@ def fisher(filename):
 	#Finding equation of seperating line
 	x = np.linspace(-0.1,0.1)
 	y=(-W[0]/W[1])*x-point[0]*(-W[0]/W[1])+point[1]
-	plt.plot(x,y,'b')	#plotting seperating line
-	plt.savefig("fisher@"+filename+".png")
+	plt.plot(x,y,'b')						#plotting seperating line
+	plt.savefig("fisher@"+filename+".png")	#Saving results
 	plt.close()
 	#plt.show()
 fisher('dataset_1.csv')
