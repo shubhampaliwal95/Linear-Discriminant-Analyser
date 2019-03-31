@@ -37,7 +37,7 @@ def perceptron(filename):
 			if(projection_class2[j]>0):						#Wrongly predicted class2 points
 				error_projection_2+=(projection_class2[j])*-1
 		net_error=-(error_projection_1)-(error_projection_2) #Net_error
-		print(net_error)
+		#print(net_error)
 		del_E_by_del_W0=0
 		del_E_by_del_W1=0
 		del_E_by_del_W2=0
@@ -67,11 +67,12 @@ def perceptron(filename):
 		z=np.linspace(-2, 2, 1000)
 		plt.plot(z,(-W[1]/W[2])*z+(-W[0]/W[2]),'-g')
 		#print(str(i))
-		plt.savefig("perceptron"+str(i)+".png")		#Saving the result
-		plt.close()
+		#plt.savefig("perceptron"+str(i)+".png")		#Saving the result
+		#plt.close()
 		#Converging condition
 		if(abs(prev_error-net_error)<0.001):	
 			print("Converged")
+			print("Final W is:",W)
 			break
 		prev_error=net_error
 
@@ -79,5 +80,5 @@ def perceptron(filename):
 
 	
 perceptron('dataset_1.csv')
-#perceptron('dataset_2.csv')
-#perceptron('dataset_3.csv')
+perceptron('dataset_2.csv')
+perceptron('dataset_3.csv')

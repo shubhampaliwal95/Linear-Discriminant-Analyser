@@ -39,13 +39,14 @@ def fisher(filename):
 	S_W_inv = np.linalg.inv(S_W)
 	W = S_W_inv.dot(mean_vectors[1]-mean_vectors[0])
 	W = W/np.linalg.norm(W)
-
+	print("W is:",W)
 	#print(W.shape)
 	#print(coordinates.shape)
 
 	#Plotting the points
 	coordinates_class1=dataset[dataset['class']==0][["x","y"]].values
 	coordinates_class2=dataset[dataset['class']==1][["x","y"]].values
+	#print(coordinates_class1.shape)
 	plt.plot(coordinates_class1[:,0],coordinates_class1[:,1],'.',color='r',alpha=0.25)
 	plt.plot(coordinates_class2[:,0],coordinates_class2[:,1],'*',color='g',alpha=0.25)
 	projection_class1=np.dot(coordinates_class1,W)
@@ -55,7 +56,7 @@ def fisher(filename):
 	proj_vec_class1=np.stack([projection_class1,projection_class1],axis=1)*W  #projected point with magnitude in direction of W
 	proj_vec_class2=np.stack([projection_class2,projection_class2],axis=1)*W
 
-	print(proj_vec_class1.shape)
+	#print(proj_vec_class1.shape)
 	
 	plt.plot(proj_vec_class1[::1,0],proj_vec_class1[::1,1],'.',color='r',alpha=0.5,label='class 0')	#::5 means every 5th
 	plt.plot(proj_vec_class2[::1,0],proj_vec_class2[::1,1],'*',color='g',alpha=0.5,label='class 1')
@@ -67,6 +68,10 @@ def fisher(filename):
 	mean_projected_class2=np.mean(projection_class2)
 	var_projected_class1=np.var(projection_class1)
 	var_projected_class2=np.var(projection_class2)
+	print("mean 1 is: ",mean_projected_class1)
+	print("variance 1 is:",var_projected_class1)
+	print("mean 2 is:",mean_projected_class2)
+	print("variance 2 is:",var_projected_class2)
 	#Finding point of intersection of normal distribution
 	def solve(m1,m2,std1,std2):
 	  a = 1/(2*std1**2) - 1/(2*std2**2)
@@ -100,12 +105,12 @@ def fisher(filename):
 		seperation_point=np.asarray([result[1],result[1]])
 
 	point=(seperation_point.T)*W
-	#print(point)
+	print("Seperation point is :",point)
 	#Finding equation of seperating line
 	x = np.linspace(-0.1,0.1)
 	y=(-W[0]/W[1])*x-point[0]*(-W[0]/W[1])+point[1]
 	plt.plot(x,y,'b')						#plotting seperating line
-	plt.savefig("fisher@"+filename+".png")	#Saving results
+	#plt.savefig("fisher@"+filename+".png")	#Saving results
 	plt.close()
 	#plt.show()
 fisher('dataset_1.csv')
